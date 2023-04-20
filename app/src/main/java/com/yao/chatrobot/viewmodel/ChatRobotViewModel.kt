@@ -26,7 +26,6 @@ import kotlinx.coroutines.withContext
 class ChatRobotViewModel(
     private val apiKeyRepository: ApiKeyRepository, private val openAI: OpenAI
 ) : ViewModel() {
-    // API_KEY=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
     val apiKeyFlow: StateFlow<ApiKeyResult> = apiKeyRepository.getApiKey().map {
         if (it.isEmpty()) ApiKeyResult.Empty else ApiKeyResult.ApiKey(it)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), ApiKeyResult.Initial)
