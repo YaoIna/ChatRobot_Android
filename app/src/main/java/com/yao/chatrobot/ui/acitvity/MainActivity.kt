@@ -14,7 +14,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.aallam.openai.client.OpenAI
 import com.yao.chatrobot.repo.ApiKeyRepository
 import com.yao.chatrobot.store.dataStore
 import com.yao.chatrobot.ui.component.ApiKeyScreen
@@ -23,7 +22,6 @@ import com.yao.chatrobot.ui.component.LoadingScreen
 import com.yao.chatrobot.ui.theme.ChatRobotTheme
 import com.yao.chatrobot.viewmodel.ApiKeyResult
 import com.yao.chatrobot.viewmodel.ChatRobotViewModel
-import io.github.cdimascio.dotenv.dotenv
 
 class MainActivity : ComponentActivity() {
 
@@ -44,11 +42,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun getViewModel(context: Context) = viewModel {
-    val dotenv = dotenv {
-        directory = "/assets"
-        filename = "env"
-    }
-    ChatRobotViewModel(ApiKeyRepository(context.dataStore), OpenAI(dotenv["API_KEY"]))
+    ChatRobotViewModel(ApiKeyRepository(context.dataStore))
 }
 
 @Composable

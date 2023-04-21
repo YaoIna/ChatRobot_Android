@@ -24,7 +24,7 @@ import kotlinx.coroutines.withContext
 
 @OptIn(BetaOpenAI::class)
 class ChatRobotViewModel(
-    private val apiKeyRepository: ApiKeyRepository, private val openAI: OpenAI
+    private val apiKeyRepository: ApiKeyRepository
 ) : ViewModel() {
     val apiKeyFlow: StateFlow<ApiKeyResult> = apiKeyRepository.getApiKey().map {
         if (it.isEmpty()) ApiKeyResult.Empty else ApiKeyResult.ApiKey(it)
@@ -37,6 +37,11 @@ class ChatRobotViewModel(
     val messageList: List<Message>
         get() = _messageList
 
+    private var openAI: OpenAI? = null
+
+    init {
+        observeApiKey()
+    }
 
     fun saveApiKey(apiKey: String) = viewModelScope.launch(Dispatchers.IO) {
         apiKeyRepository.saveApiKey(apiKey)
@@ -44,15 +49,20 @@ class ChatRobotViewModel(
 
     fun sendMessage(messageContent: String) {
         if (messageContent.isEmpty()) return
-        _messageList.add(Message(messageContent, role = Role.User))
-        chatWithRobot(messageContent)
+        openAI?.also {
+            _messageList.add(Message(messageContent, role = Role.User))
+            chatWithRobot(messageContent, it)
+        } ?: run {
+            _robotStateFlow.value = UiState.Error("openAI is null")
+        }
+
     }
 
-    private fun chatWithRobot(message: String) {
+    private fun chatWithRobot(message: String, openAiIns: OpenAI) {
         viewModelScope.launch {
             val response = withContext(Dispatchers.IO) {
                 try {
-                    openAI.chatCompletion(buildChatRequest(message)).let {
+                    openAiIns.chatCompletion(buildChatRequest(message)).let {
                         val msg = it.choices.firstOrNull()?.message
                             ?: return@let UiState.Error("there's no message")
                         val role = if (msg.role == ChatRole.User) Role.User else Role.Robot
@@ -76,6 +86,13 @@ class ChatRobotViewModel(
         )
     )
 
+    private fun observeApiKey() {
+        viewModelScope.launch {
+            apiKeyRepository.getApiKey().collect {
+                openAI = if (it.isEmpty()) null else OpenAI(it)
+            }
+        }
+    }
 }
 
 
