@@ -29,6 +29,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,6 +40,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
@@ -52,6 +54,9 @@ import com.yao.chatrobot.data.Message
 import com.yao.chatrobot.data.Role
 import com.yao.chatrobot.viewmodel.ChatRobotViewModel
 import kotlinx.coroutines.launch
+
+
+private val JumpToBottomThreshold = 56.dp
 
 @Composable
 fun RobotMessageCard(msg: Message) {
@@ -72,14 +77,17 @@ fun RobotMessageCard(msg: Message) {
         var isExpanded by remember {
             mutableStateOf(true)
         }
-        Surface(shape = MaterialTheme.shapes.medium,
+        Surface(
+            shape = MaterialTheme.shapes.medium,
             modifier = Modifier
                 .animateContentSize()
                 .padding(1.dp)
-                .clickable { isExpanded = !isExpanded }) {
+                .clickable { isExpanded = !isExpanded },
+            color = MaterialTheme.colorScheme.secondary
+        ) {
             Text(
                 text = msg.message,
-                modifier = Modifier.padding(all = 4.dp),
+                modifier = Modifier.padding(all = 8.dp),
                 maxLines = if (isExpanded) Int.MAX_VALUE else 1,
             )
         }
@@ -99,15 +107,18 @@ fun UserMessageCardTest(msg: Message) {
         var isExpanded by remember {
             mutableStateOf(true)
         }
-        Surface(shape = MaterialTheme.shapes.medium,
+        Surface(
+            shape = MaterialTheme.shapes.medium,
             modifier = Modifier
                 .animateContentSize()
                 .padding(1.dp)
                 .weight(0.9f, false)
-                .clickable { isExpanded = !isExpanded }) {
+                .clickable { isExpanded = !isExpanded },
+            color = MaterialTheme.colorScheme.primary
+        ) {
             Text(
                 text = msg.message,
-                modifier = Modifier.padding(all = 4.dp),
+                modifier = Modifier.padding(all = 8.dp),
                 maxLines = if (isExpanded) Int.MAX_VALUE else 1,
             )
         }
@@ -129,19 +140,37 @@ fun UserMessageCardTest(msg: Message) {
 fun MessageList(modifier: Modifier = Modifier, messages: List<Message>) {
     val scrollState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
-    LazyColumn(modifier = modifier, state = scrollState, reverseLayout = true) {
-        items(messages) {
-            if (it.role == Role.Robot) {
-                RobotMessageCard(it)
-            } else {
-                UserMessageCardTest(it)
+    Box(modifier = modifier) {
+        LazyColumn(modifier = Modifier.fillMaxSize(), state = scrollState, reverseLayout = true) {
+            items(messages) {
+                if (it.role == Role.Robot) {
+                    RobotMessageCard(it)
+                } else {
+                    UserMessageCardTest(it)
+                }
+            }
+            coroutineScope.launch {
+                scrollState.scrollToItem(0)
             }
         }
-        coroutineScope.launch {
-            scrollState.scrollToItem(0)
+        val jumpThreshold = with(LocalDensity.current) {
+            JumpToBottomThreshold.toPx()
         }
+        val jumpToBottomEnable by remember {
+            derivedStateOf {
+                scrollState.firstVisibleItemIndex != 0 || scrollState.firstVisibleItemScrollOffset > jumpThreshold
+            }
+        }
+        JumpToBottomButton(modifier = Modifier.align(Alignment.BottomCenter),
+            enable = jumpToBottomEnable,
+            onClick = {
+                coroutineScope.launch {
+                    scrollState.animateScrollToItem(0)
+                }
+            })
     }
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
