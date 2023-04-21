@@ -29,6 +29,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,6 +50,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yao.chatrobot.R
 import com.yao.chatrobot.data.Message
 import com.yao.chatrobot.data.Role
@@ -137,20 +139,24 @@ fun UserMessageCardTest(msg: Message) {
 }
 
 @Composable
-fun MessageList(modifier: Modifier = Modifier, messages: List<Message>) {
+fun MessageList(modifier: Modifier = Modifier, viewModel: ChatRobotViewModel) {
     val scrollState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
+    val scrollBehavior by viewModel.scrollBehavior.collectAsStateWithLifecycle()
+    LaunchedEffect(scrollBehavior) {
+        if (scrollBehavior == 0) return@LaunchedEffect
+        if (scrollState.firstVisibleItemIndex != 0 || scrollState.firstVisibleItemScrollOffset > 0) scrollState.animateScrollToItem(
+            0
+        )
+    }
     Box(modifier = modifier) {
         LazyColumn(modifier = Modifier.fillMaxSize(), state = scrollState, reverseLayout = true) {
-            items(messages) {
+            items(viewModel.messageList) {
                 if (it.role == Role.Robot) {
                     RobotMessageCard(it)
                 } else {
                     UserMessageCardTest(it)
                 }
-            }
-            coroutineScope.launch {
-                scrollState.scrollToItem(0)
             }
         }
         val jumpThreshold = with(LocalDensity.current) {
@@ -234,7 +240,7 @@ fun ChatRoomScreen(viewModel: ChatRobotViewModel) {
                     bottom.linkTo(messageInput.top)
                     top.linkTo(parent.top)
                     height = Dimension.fillToConstraints
-                }, messages = viewModel.messageList
+                }, viewModel = viewModel
         )
 
     }
