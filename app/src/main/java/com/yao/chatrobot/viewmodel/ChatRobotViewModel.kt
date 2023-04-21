@@ -33,6 +33,10 @@ class ChatRobotViewModel(
     private val _robotStateFlow = MutableStateFlow<UiState>(UiState.Loading)
     val robotStateFlow = _robotStateFlow.asStateFlow()
 
+    private val _scrollBehavior = MutableStateFlow(0)
+    val scrollBehavior: StateFlow<Int>
+        get() = _scrollBehavior
+
     private val _messageList = mutableStateListOf<Message>()
     val messageList: List<Message>
         get() = _messageList
@@ -51,6 +55,7 @@ class ChatRobotViewModel(
         if (messageContent.isEmpty()) return
         openAI?.also {
             _messageList.add(0, Message(messageContent, role = Role.User))
+            _scrollBehavior.value = getScrollTrigger(_scrollBehavior.value)
             chatWithRobot(messageContent, it)
         } ?: run {
             _robotStateFlow.value = UiState.Error("openAI is null")
@@ -68,6 +73,7 @@ class ChatRobotViewModel(
                         val role = if (msg.role == ChatRole.User) Role.User else Role.Robot
                         val chatMessage = Message(msg.content, role)
                         _messageList.add(0, chatMessage)
+                        _scrollBehavior.value = getScrollTrigger(_scrollBehavior.value)
                         UiState.Success(chatMessage)
                     }
                 } catch (e: Exception) {
@@ -93,6 +99,11 @@ class ChatRobotViewModel(
             }
         }
     }
+
+    private fun getScrollTrigger(current: Int): Int {
+        if (current == 0) return 1
+        return -current
+    }
 }
 
 
@@ -101,6 +112,7 @@ sealed interface ApiKeyResult {
     class ApiKey(val value: String) : ApiKeyResult
     object Empty : ApiKeyResult
 }
+
 
 sealed class UiState {
     object Loading : UiState()
