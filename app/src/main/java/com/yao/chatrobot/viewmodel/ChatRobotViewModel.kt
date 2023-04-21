@@ -50,7 +50,7 @@ class ChatRobotViewModel(
     fun sendMessage(messageContent: String) {
         if (messageContent.isEmpty()) return
         openAI?.also {
-            _messageList.add(Message(messageContent, role = Role.User))
+            _messageList.add(0, Message(messageContent, role = Role.User))
             chatWithRobot(messageContent, it)
         } ?: run {
             _robotStateFlow.value = UiState.Error("openAI is null")
@@ -67,7 +67,7 @@ class ChatRobotViewModel(
                             ?: return@let UiState.Error("there's no message")
                         val role = if (msg.role == ChatRole.User) Role.User else Role.Robot
                         val chatMessage = Message(msg.content, role)
-                        _messageList.add(chatMessage)
+                        _messageList.add(0, chatMessage)
                         UiState.Success(chatMessage)
                     }
                 } catch (e: Exception) {

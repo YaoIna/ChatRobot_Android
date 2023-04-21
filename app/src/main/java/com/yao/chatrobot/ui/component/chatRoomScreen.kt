@@ -46,6 +46,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.constraintlayout.compose.Dimension
 import com.yao.chatrobot.R
 import com.yao.chatrobot.data.Message
 import com.yao.chatrobot.data.Role
@@ -86,43 +87,6 @@ fun RobotMessageCard(msg: Message) {
     }
 }
 
-//@Composable
-//fun MessageCardRight(msg: ChatMessage) {
-//    Column(
-//        modifier = Modifier
-//            .padding(all = 8.dp)
-//            .fillMaxWidth(), horizontalAlignment = Alignment.End
-//    ) {
-//        Row(modifier = Modifier.align(Alignment.End), horizontalArrangement = Arrangement.End) {
-//            var isExpanded by remember {
-//                mutableStateOf(true)
-//            }
-//            Surface(shape = MaterialTheme.shapes.medium,
-//                modifier = Modifier
-//                    .animateContentSize()
-//                    .padding(1.dp)
-//                    .weight(0.9f, false)
-//                    .clickable { isExpanded = !isExpanded }) {
-//                Text(
-//                    text = msg.message,
-//                    modifier = Modifier.padding(all = 4.dp),
-//                    maxLines = if (isExpanded) Int.MAX_VALUE else 1,
-//                )
-//            }
-//            Spacer(modifier = Modifier.width(8.dp))
-//            Image(
-//                painter = painterResource(R.drawable.user_pic),
-//                contentDescription = "Contact profile picture",
-//                modifier = Modifier
-//                    .size(40.dp)
-//                    .weight(0.1f)
-//                    .clip(CircleShape)
-//                    .border(1.5.dp, MaterialTheme.colorScheme.secondary, CircleShape)
-//            )
-//
-//        }
-//    }
-//}
 
 @Composable
 fun UserMessageCardTest(msg: Message) {
@@ -165,7 +129,7 @@ fun UserMessageCardTest(msg: Message) {
 fun MessageList(modifier: Modifier = Modifier, messages: List<Message>) {
     val scrollState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
-    LazyColumn(modifier = modifier, state = scrollState) {
+    LazyColumn(modifier = modifier, state = scrollState, reverseLayout = true) {
         items(messages) {
             if (it.role == Role.Robot) {
                 RobotMessageCard(it)
@@ -173,8 +137,8 @@ fun MessageList(modifier: Modifier = Modifier, messages: List<Message>) {
                 UserMessageCardTest(it)
             }
         }
-        if (messages.isNotEmpty()) coroutineScope.launch {
-            scrollState.scrollToItem(messages.size - 1)
+        coroutineScope.launch {
+            scrollState.scrollToItem(0)
         }
     }
 }
@@ -222,7 +186,6 @@ fun MessageInput(modifier: Modifier = Modifier, onSendClick: (String) -> Unit) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatRoomScreen(viewModel: ChatRobotViewModel) {
     ConstraintLayout(
@@ -240,31 +203,12 @@ fun ChatRoomScreen(viewModel: ChatRobotViewModel) {
                 .fillMaxWidth()
                 .constrainAs(messageList) {
                     bottom.linkTo(messageInput.top)
-//                    top.linkTo(parent.top)
-//                    height = Dimension.fillToConstraints
+                    top.linkTo(parent.top)
+                    height = Dimension.fillToConstraints
                 }, messages = viewModel.messageList
         )
 
     }
-
-//    Column {
-////        MessageList(
-////            Modifier
-////                .weight(9f), messages = viewModel.messageList
-////        )
-//        LazyColumn(modifier = Modifier.weight(9f)) {
-//            items(3) {
-//                Text(text = "1234")
-//            }
-//        }
-////        MessageInput(Modifier.weight(1f), onSendClick = {
-////            viewModel.sendMessage(it)
-////        })
-//        TextField(
-//            modifier = Modifier.weight(1f),
-//            value = "dfdfdfd",
-//            onValueChange = {})
-//    }
 
 }
 
@@ -275,19 +219,3 @@ fun PreviewMessageInput() {
     MessageInput(onSendClick = {})
 }
 
-
-//@Preview
-//@Composable
-//fun PreviewMessageList() {
-//    val userMessage = Message(
-//        "dfdfd",
-//        "dfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdf",
-//        Role.User
-//    )
-//    val robotMessage = Message(
-//        "ttttddd", "dfdfdfdfdfdfdfdfdfdfdfdfdfdfdfdf", Role.Robot
-//    )
-//    val list =
-//        listOf(userMessage, robotMessage, userMessage, userMessage, robotMessage, userMessage)
-//    MessageList(messages = list)
-//}
