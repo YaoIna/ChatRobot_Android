@@ -222,11 +222,18 @@ fun MessageInput(modifier: Modifier = Modifier, onSendClick: (String) -> Unit) {
 }
 
 @Composable
-fun ChatRoomScreen(viewModel: ChatRobotViewModel) {
+fun ChatRoomScreen(viewModel: ChatRobotViewModel, onUpdateClick: () -> Unit) {
     ConstraintLayout(
         Modifier.fillMaxSize()
     ) {
-        val (messageList, messageInput) = createRefs()
+        val (tab, messageList, messageInput) = createRefs()
+        MessageTab(
+            modifier = Modifier
+                .fillMaxWidth()
+                .constrainAs(tab) {
+                    top.linkTo(parent.top)
+                }, onUpdateClick = onUpdateClick
+        )
         MessageInput(Modifier.constrainAs(messageInput) {
             bottom.linkTo(parent.bottom)
         }, onSendClick = {
@@ -238,7 +245,7 @@ fun ChatRoomScreen(viewModel: ChatRobotViewModel) {
                 .fillMaxWidth()
                 .constrainAs(messageList) {
                     bottom.linkTo(messageInput.top)
-                    top.linkTo(parent.top)
+                    top.linkTo(tab.bottom)
                     height = Dimension.fillToConstraints
                 }, viewModel = viewModel
         )

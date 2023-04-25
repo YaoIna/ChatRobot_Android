@@ -14,11 +14,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.rememberNavController
 import com.yao.chatrobot.repo.ApiKeyRepository
 import com.yao.chatrobot.store.dataStore
 import com.yao.chatrobot.ui.component.ApiKeyScreen
-import com.yao.chatrobot.ui.component.ChatRoomScreen
 import com.yao.chatrobot.ui.component.LoadingScreen
+import com.yao.chatrobot.ui.component.RobotNavHost
 import com.yao.chatrobot.ui.theme.ChatRobotTheme
 import com.yao.chatrobot.viewmodel.ApiKeyResult
 import com.yao.chatrobot.viewmodel.ChatRobotViewModel
@@ -48,15 +49,19 @@ fun getViewModel(context: Context) = viewModel {
 @Composable
 fun App(viewModel: ChatRobotViewModel) {
     val apiKey by viewModel.apiKeyFlow.collectAsStateWithLifecycle()
+    val navController = rememberNavController()
     when (apiKey) {
         ApiKeyResult.Initial -> LoadingScreen()
         ApiKeyResult.Empty -> ApiKeyScreen(apiKey = "", onUpdateClick = {
             viewModel.saveApiKey(it)
         })
 
-        is ApiKeyResult.ApiKey -> ChatRoomScreen(viewModel = viewModel)
+        is ApiKeyResult.ApiKey -> RobotNavHost(
+            apiKey = apiKey, viewModel = viewModel, navController = navController
+        )
     }
 }
+
 
 @Preview(showBackground = true)
 @Composable

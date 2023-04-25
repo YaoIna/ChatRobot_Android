@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
@@ -43,7 +44,9 @@ fun ApiKeyScreen(
             Spacer(modifier = Modifier.height(16.dp))
         }
         Text(text = "Current API key:", fontWeight = FontWeight.Bold)
-        Text(text = apiKey)
+        SelectionContainer {
+            Text(text = apiKey)
+        }
         Spacer(modifier = Modifier.height(16.dp))
         TextField(
             modifier = Modifier.fillMaxWidth(),
@@ -54,7 +57,11 @@ fun ApiKeyScreen(
             onValueChange = { text = it },
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Button(modifier = Modifier.align(Alignment.End), onClick = { onUpdateClick(text) }) {
+        Button(modifier = Modifier.align(Alignment.End), onClick = {
+            if (text.isEmpty())
+                return@Button
+            onUpdateClick(text)
+        }) {
             Text(text = "Update")
         }
     }
