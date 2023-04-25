@@ -70,6 +70,5 @@ dependencies {
     implementation 'io.github.cdimascio:dotenv-kotlin:6.4.1'
     implementation "io.ktor:ktor-client-okhttp:2.2.4"
     implementation "androidx.constraintlayout:constraintlayout-compose:1.0.1"
-
-
+    implementation "androidx.navigation:navigation-compose:2.6.0-beta01"
 }

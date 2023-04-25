@@ -37,6 +37,7 @@ class ChatRobotViewModel(
     val scrollBehavior: StateFlow<Int>
         get() = _scrollBehavior
 
+
     private val _messageList = mutableStateListOf<Message>()
     val messageList: List<Message>
         get() = _messageList
@@ -47,8 +48,11 @@ class ChatRobotViewModel(
         observeApiKey()
     }
 
-    fun saveApiKey(apiKey: String) = viewModelScope.launch(Dispatchers.IO) {
-        apiKeyRepository.saveApiKey(apiKey)
+    fun saveApiKey(apiKey: String) {
+        if (apiKey.isEmpty()) return
+        viewModelScope.launch(Dispatchers.IO) {
+            apiKeyRepository.saveApiKey(apiKey)
+        }
     }
 
     fun sendMessage(messageContent: String) {
@@ -77,6 +81,7 @@ class ChatRobotViewModel(
                         UiState.Success(chatMessage)
                     }
                 } catch (e: Exception) {
+                    val m = e
                     return@withContext UiState.Error(e.message ?: "unknown error")
                 }
             }
