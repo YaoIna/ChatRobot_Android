@@ -13,9 +13,11 @@ import com.yao.chatrobot.data.Message
 import com.yao.chatrobot.data.Role
 import com.yao.chatrobot.repo.ApiKeyRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -30,8 +32,11 @@ class ChatRobotViewModel(
         if (it.isEmpty()) ApiKeyResult.Empty else ApiKeyResult.ApiKey(it)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), ApiKeyResult.Initial)
 
-    private val _robotStateFlow = MutableStateFlow<UiState>(UiState.Loading)
+    private val _robotStateFlow = MutableStateFlow<UiState>(UiState.Initial)
     val robotStateFlow = _robotStateFlow.asStateFlow()
+
+    private val _robotSharedFlow = MutableSharedFlow<UiState>(replay = 0)
+    val robotSharedFlow = _robotSharedFlow.asSharedFlow()
 
     private val _scrollBehavior = MutableStateFlow(0)
     val scrollBehavior: StateFlow<Int>
@@ -62,14 +67,16 @@ class ChatRobotViewModel(
             _scrollBehavior.value = getScrollTrigger(_scrollBehavior.value)
             chatWithRobot(messageContent, it)
         } ?: run {
-            _robotStateFlow.value = UiState.Error("openAI is null")
+            viewModelScope.launch {
+                _robotSharedFlow.emit(UiState.Error("openAI is null"))
+            }
         }
 
     }
 
     private fun chatWithRobot(message: String, openAiIns: OpenAI) {
         viewModelScope.launch {
-            val response = withContext(Dispatchers.IO) {
+            withContext(Dispatchers.IO) {
                 try {
                     openAiIns.chatCompletion(buildChatRequest(message)).let {
                         val msg = it.choices.firstOrNull()?.message
@@ -78,14 +85,13 @@ class ChatRobotViewModel(
                         val chatMessage = Message(msg.content, role)
                         _messageList.add(0, chatMessage)
                         _scrollBehavior.value = getScrollTrigger(_scrollBehavior.value)
-                        UiState.Success(chatMessage)
                     }
                 } catch (e: Exception) {
-                    val m = e
-                    return@withContext UiState.Error(e.message ?: "unknown error")
+                    viewModelScope.launch {
+                        _robotSharedFlow.emit(UiState.Error(e.message ?: "unknown error"))
+                    }
                 }
             }
-            _robotStateFlow.value = response
         }
     }
 
@@ -120,6 +126,7 @@ sealed interface ApiKeyResult {
 
 
 sealed class UiState {
+    object Initial : UiState()
     object Loading : UiState()
     class Success<T>(val data: T) : UiState()
     class Error(val message: String) : UiState()
