@@ -7,6 +7,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,6 +26,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
@@ -55,6 +59,7 @@ import com.yao.chatrobot.R
 import com.yao.chatrobot.data.Message
 import com.yao.chatrobot.data.Role
 import com.yao.chatrobot.viewmodel.ChatRobotViewModel
+import com.yao.chatrobot.viewmodel.UiState
 import kotlinx.coroutines.launch
 
 
@@ -221,10 +226,32 @@ fun MessageInput(modifier: Modifier = Modifier, onSendClick: (String) -> Unit) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatRoomScreen(viewModel: ChatRobotViewModel, onUpdateClick: () -> Unit) {
+    val snackBarHostState = remember { SnackbarHostState() }
+    val robotState by viewModel.robotSharedFlow.collectAsStateWithLifecycle(initialValue = UiState.Initial)
+
+    LaunchedEffect(robotState) {
+        val state = robotState
+        if (state is UiState.Error) snackBarHostState.showSnackbar(state.message)
+    }
+
+    Scaffold(snackbarHost = {
+        SnackbarHost(hostState = snackBarHostState)
+    }) {
+        MessageScreen(viewModel = viewModel, onUpdateClick = onUpdateClick, it)
+    }
+}
+
+@Composable
+fun MessageScreen(
+    viewModel: ChatRobotViewModel, onUpdateClick: () -> Unit, paddingValues: PaddingValues
+) {
     ConstraintLayout(
-        Modifier.fillMaxSize()
+        Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
     ) {
         val (tab, messageList, messageInput) = createRefs()
         MessageTab(
@@ -251,7 +278,6 @@ fun ChatRoomScreen(viewModel: ChatRobotViewModel, onUpdateClick: () -> Unit) {
         )
 
     }
-
 }
 
 
