@@ -104,7 +104,7 @@ fun RobotMessageCard(msg: Message) {
 
 
 @Composable
-fun UserMessageCardTest(msg: Message) {
+fun UserMessageCard(msg: Message) {
     Row(
         modifier = Modifier
             .padding(all = 8.dp)
@@ -160,7 +160,7 @@ fun MessageList(modifier: Modifier = Modifier, viewModel: ChatRobotViewModel) {
                 if (it.role == Role.Robot) {
                     RobotMessageCard(it)
                 } else {
-                    UserMessageCardTest(it)
+                    UserMessageCard(it)
                 }
             }
         }
